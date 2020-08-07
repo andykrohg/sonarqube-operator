@@ -2,7 +2,7 @@
 - name: Build Operator in Kubernetes docker container
   hosts: k8s
   collections:
-   - community.kubernetes
+  - community.kubernetes
 
   vars:
     image: redhatgov.io/sonarqube-operator:testing
@@ -26,17 +26,17 @@
   hosts: localhost
   connection: local
   collections:
-   - community.kubernetes
+  - community.kubernetes
 
   vars:
     image: redhatgov.io/sonarqube-operator:testing
     operator_template: "{{ '/'.join([template_dir, 'operator.yaml.j2']) }}"
 
   tasks:
-   - name: Create the Operator Deployment
-     k8s:
-       namespace: '{{ namespace }}'
-       definition: "{{ lookup('template', operator_template) }}"
-       wait: yes
-     vars:
-       pull_policy: Never
+  - name: Create the Operator Deployment
+    k8s:
+      namespace: '{{ namespace }}'
+      definition: "{{ lookup('template', operator_template) }}"
+      wait: yes
+    vars:
+      pull_policy: Never
