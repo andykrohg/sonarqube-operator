@@ -1,4 +1,4 @@
-apiVersion: gpte.opentlc.com/v1alpha1
+apiVersion: redhatgov.io/v1alpha1
 kind: Sonarqube
 metadata:
   name: example-sonarqube

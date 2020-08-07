@@ -16,7 +16,7 @@ spec:
       serviceAccountName: sonarqube-operator
       containers:
         - name: sonarqube-operator
-          image: quay.io/gpte-devops-automation/sonarqube-operator:v0.17
+          image: quay.io/redhatgov/sonarqube-operator:latest
           imagePullPolicy: "Always"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
