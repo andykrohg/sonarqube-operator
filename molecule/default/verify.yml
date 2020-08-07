@@ -3,16 +3,16 @@
   hosts: localhost
   connection: local
   tasks:
-    - name: Get all pods in {{ namespace }}
-      k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: '{{ namespace }}'
-      register: pods
+  - name: Get all pods in {{ namespace }}
+    k8s_info:
+      api_version: v1
+      kind: Pod
+      namespace: '{{ namespace }}'
+    register: pods
 
-    - name: Output pods
-      debug: var=pods
+  - name: Output pods
+    debug: var=pods
 
-    - name: Example assertion
-      assert:
-        that: true
+  - name: Example assertion
+    assert:
+      that: true

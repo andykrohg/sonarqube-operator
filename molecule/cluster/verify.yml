@@ -5,31 +5,32 @@
   connection: local
   gather_facts: no
   collections:
-    - community.kubernetes
+  - community.kubernetes
 
   vars:
-    custom_resource: "{{ lookup('template', '/'.join([deploy_dir, 'crds/gpte.opentlc.com_v1alpha1_sonarqube_cr.yaml'])) | from_yaml }}"
+    custom_resource: |
+      {{ lookup('template', '/'.join([deploy_dir, 'crds/redhatgov.io_v1alpha1_sonarqube_cr.yaml'])) }}
 
   tasks:
-    - name: Create the gpte.opentlc.com/v1alpha1.Sonarqube and wait for reconciliation to complete
-      k8s:
-        state: present
-        namespace: '{{ namespace }}'
-        definition: '{{ custom_resource }}'
-        wait: yes
-        wait_timeout: 300
-        wait_condition:
-          type: Running
-          reason: Successful
-          status: "True"
+  - name: Create the redhatgov.io/v1alpha1.Sonarqube and wait for reconciliation to complete
+    k8s:
+      state: present
+      namespace: '{{ namespace }}'
+      definition: '{{ custom_resource|from_yaml }}'
+      wait: yes
+      wait_timeout: 300
+      wait_condition:
+        type: Running
+        reason: Successful
+        status: "True"
 
-    - name: Get Pods
-      k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: '{{ namespace }}'
-      register: pods
+  - name: Get Pods
+    k8s_info:
+      api_version: v1
+      kind: Pod
+      namespace: '{{ namespace }}'
+    register: pods
 
-    - name: Example assertion
-      assert:
-        that: (pods | length) > 0
+  - name: Example assertion
+    assert:
+      that: (pods | length) > 0
