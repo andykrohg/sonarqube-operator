@@ -29,3 +29,6 @@
     rescue:
     - name: check running containers
       command: docker ps -a
+      register: running_containers
+    - name: show containers
+      debug: var=running_containers.stdout_lines
