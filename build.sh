@@ -92,8 +92,14 @@ function docker_build () {
     fi
 
     if [ -n "$OPERATOR_BUILD" ]; then
-        pip3 install git+https://git.jharmison.com/jharmison/operator-sdk-manager
-        operator-sdk-manager update -vv
+        if ! which operator-sdk &>/dev/null; then
+            if [ -n "$VIRTUAL_ENV" ]; then
+                pip3 install git+https://git.jharmison.com/jharmison/operator-sdk-manager
+            else
+                pip3 install --user git+https://git.jharmison.com/jharmison/operator-sdk-manager
+            fi
+            operator-sdk-manager update -vv
+        fi
         operator-sdk build --image-build-args "${args[*]}" "$CONTAINER_IMAGE:$CONTAINER_TAG" || exit 3
     else
         docker build "${args[@]}" -t "$CONTAINER_IMAGE:$CONTAINER_TAG" . || exit 3
