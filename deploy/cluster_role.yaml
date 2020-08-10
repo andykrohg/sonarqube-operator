@@ -80,7 +80,7 @@ rules:
   verbs:
   - get
 - apiGroups:
-  - gpte.opentlc.com
+  - redhatgov.io
   resources:
   - '*'
   verbs:
