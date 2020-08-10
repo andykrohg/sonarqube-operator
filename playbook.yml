@@ -35,7 +35,7 @@
       _sonarqube_ssl: "{{ sonarqube_ssl|d(False)|bool }}"
       _sonarqube_route: "{{ sonarqube_route | d('') }}"
       _sonarqube_image_tag: "{{ sonarqube_image_tag | d('latest') }}"
-      _sonarqube_volume_size: "{{ sonarqube_volume_size }}"
+      _sonarqube_volume_size: "{{ sonarqube_volume_size |d('1Gi') }}"
       _sonarqube_postgresql_service_name: "postgresql-{{ meta.name }}"
       _sonarqube_postgresql_database_name: sonardb
       _sonarqube_postgresql_user: sonar
