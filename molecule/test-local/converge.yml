@@ -14,20 +14,8 @@
     register: prev_hash_raw
     changed_when: false
 
-  - name: Install build.sh requirements
-    package:
-      name:
-      - git
-      - '{{ gpg_package[ansible_os_family] }}'
-      state: installed
-    vars:
-      gpg_package:
-        RedHat: gnupg2
-        Alpine: gnupg
-        Debian: gnupg
-
   - name: Build Operator Image
-    command: /build/build.sh -b local -d -t testing -o
+    command: docker build -f /build/build/Dockerfile -t {{ image }} /build
     register: build_cmd
     changed_when: not hash or (hash and hash not in build_cmd.stdout)
     vars:
