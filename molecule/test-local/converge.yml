@@ -28,7 +28,7 @@
   - community.kubernetes
 
   vars:
-    image: redhatgov.io/sonarqube-operator:testing
+    image: quay.io/redhatgov/sonarqube-operator:testing
     operator_template: "{{ '/'.join([template_dir, 'operator.yaml.j2']) }}"
 
   tasks:
