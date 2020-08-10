@@ -20,7 +20,7 @@
     changed_when: not hash or (hash and hash not in cmd_out)
     vars:
       hash: '{{ prev_hash_raw.stdout }}'
-      cmd_out: '{{ "".join(build_cmd.stdout_lines[-2:]) }}'
+      cmd_out: '{{ "".join(build_cmd.stdout_lines[-3:]) }}'
 
 - name: Converge
   hosts: localhost
