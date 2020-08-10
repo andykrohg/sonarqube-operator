@@ -5,7 +5,7 @@
   - community.kubernetes
 
   vars:
-    image: redhatgov.io/sonarqube-operator:testing
+    image: quay.io/redhatgov/sonarqube-operator:testing
 
   tasks:
   # using command so we don't need to install any dependencies
@@ -15,7 +15,7 @@
     changed_when: false
 
   - name: Build Operator Image
-    command: docker build -f /build/build/Dockerfile -t {{ image }} /build
+    command: ./build.sh -b local -d -t testing -o
     register: build_cmd
     changed_when: not hash or (hash and hash not in cmd_out)
     vars:

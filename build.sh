@@ -94,9 +94,9 @@ function docker_build () {
     if [ -n "$OPERATOR_BUILD" ]; then
         if ! which operator-sdk &>/dev/null; then
             if [ -n "$VIRTUAL_ENV" ]; then
-                pip3 install git+https://git.jharmison.com/jharmison/operator-sdk-manager
+                pip3 install --upgrade git+https://git.jharmison.com/jharmison/operator-sdk-manager
             else
-                pip3 install --user git+https://git.jharmison.com/jharmison/operator-sdk-manager
+                pip3 install --upgrade --user git+https://git.jharmison.com/jharmison/operator-sdk-manager
             fi
             operator-sdk-manager update -vv
         fi
