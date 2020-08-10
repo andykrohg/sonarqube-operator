@@ -16,7 +16,9 @@
 
   - name: Install build.sh requirements
     package:
-      name: git
+      name:
+      - git
+      - gnupg2
       state: installed
 
   - name: Build Operator Image
