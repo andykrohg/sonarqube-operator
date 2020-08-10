@@ -14,13 +14,17 @@
     register: prev_hash_raw
     changed_when: false
 
+  - name: Install build.sh requirements
+    package:
+      name: git
+      state: installed
+
   - name: Build Operator Image
-    command: ./build.sh -b local -d -t testing -o
+    command: /build/build.sh -b local -d -t testing -o
     register: build_cmd
-    changed_when: not hash or (hash and hash not in cmd_out)
+    changed_when: not hash or (hash and hash not in build_cmd.stdout)
     vars:
       hash: '{{ prev_hash_raw.stdout }}'
-      cmd_out: '{{ "".join(build_cmd.stdout_lines[-3:]) }}'
 
 - name: Converge
   hosts: localhost
