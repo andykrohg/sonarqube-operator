@@ -92,21 +92,34 @@ function docker_build () {
     fi
 
     if [ -n "$OPERATOR_BUILD" ]; then
+        echo "Operator build" >&2
         if ! which operator-sdk &>/dev/null; then
+            echo "No operator-sdk detected" >&2
             if [ -n "$VIRTUAL_ENV" ]; then
-                pip3 install --upgrade git+https://git.jharmison.com/jharmison/operator-sdk-manager
+                echo "Installing operator-sdk-manager to virtualenv" >&2
+                pip3 install --upgrade git+https://git.jharmison.com/jharmison/operator-sdk-manager || exit 120
+                echo "Updating operator-sdk" >&2
+                operator-sdk-manager update -vvvv
             else
-                pip3 install --upgrade --user git+https://git.jharmison.com/jharmison/operator-sdk-manager
+                echo "Installing operator-sdk-manager for user" >&2
+                pip3 install --upgrade --user git+https://git.jharmison.com/jharmison/operator-sdk-manager || exit 120
+                echo "Updating operator-sdk" >&2
+                $HOME/.local/bin/operator-sdk-manager update -vvvv
             fi
-            operator-sdk-manager update -vvvv
+            echo "Building image" >&2
+            $HOME/.local/bin/operator-sdk build --image-build-args "${args[*]}" "$CONTAINER_IMAGE:$CONTAINER_TAG" || exit 3
+        else
+            echo "Building image with preinstalled operator-sdk" >&2
+            operator-sdk build --image-build-args "${args[*]}" "$CONTAINER_IMAGE:$CONTAINER_TAG" || exit 3
         fi
-        $HOME/.local/bin/operator-sdk build --image-build-args "${args[*]}" "$CONTAINER_IMAGE:$CONTAINER_TAG" || exit 3
     else
+        echo "Executing normal docker build of $CONTAINER_IMAGE:$CONTAINER_TAG" >&2
         docker build "${args[@]}" -t "$CONTAINER_IMAGE:$CONTAINER_TAG" . || exit 3
     fi
 
     for tag in "${tags[@]}"; do
         if [ "$tag" != "$CONTAINER_IMAGE:$CONTAINER_TAG" ]; then
+            echo "Adding tag: $tag" >&2
             docker tag "$CONTAINER_IMAGE:$CONTAINER_TAG" "$tag"
         fi
     done
@@ -115,18 +128,22 @@ function docker_build () {
 # build
 case $BUILD in
     local)
+        echo "LOCAL BUILD" >&2
         docker_build "${@}"
         ;;
     quay)
+        echo "QUAY BUILD" >&2
         # designed to be used by travis-ci, where the docker_* variables are defined
         if [ -z "$DOCKER_PASSWORD" -o -z "$DOCKER_USERNAME" ]; then
             echo "Requires DOCKER_USERNAME and DOCKER_PASSWORD variables to be exported." >&2
             exit 1
         fi
+        echo "...logging in." >&2
         echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin quay.io || exit 2
 
         docker_build "${@}"
         for tag in "${tags[@]}"; do
+            echo "Pushing tag: $tag" >&2
             docker push "$tag" || exit 4
         done
         ;;
