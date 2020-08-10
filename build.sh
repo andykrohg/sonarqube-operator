@@ -98,9 +98,9 @@ function docker_build () {
             else
                 pip3 install --upgrade --user git+https://git.jharmison.com/jharmison/operator-sdk-manager
             fi
-            operator-sdk-manager update -vv
+            operator-sdk-manager update -vvvv
         fi
-        operator-sdk build --image-build-args "${args[*]}" "$CONTAINER_IMAGE:$CONTAINER_TAG" || exit 3
+        $HOME/.local/bin/operator-sdk build --image-build-args "${args[*]}" "$CONTAINER_IMAGE:$CONTAINER_TAG" || exit 3
     else
         docker build "${args[@]}" -t "$CONTAINER_IMAGE:$CONTAINER_TAG" . || exit 3
     fi
