@@ -12,17 +12,26 @@
       {{ lookup('template', '/'.join([deploy_dir, 'crds/redhatgov.io_v1alpha1_sonarqube_cr.yaml'])) }}
 
   tasks:
-  - name: Create the redhatgov.io/v1alpha1.Sonarqube and wait for reconciliation to complete
-    k8s:
-      state: present
-      namespace: '{{ namespace }}'
-      definition: '{{ custom_resource|from_yaml }}'
-      wait: yes
-      wait_timeout: 300
-      wait_condition:
-        type: Running
-        reason: Successful
-        status: "True"
+  - block:
+    - name: Create the redhatgov.io/v1alpha1.Sonarqube and wait for reconciliation to complete
+      k8s:
+        state: present
+        namespace: '{{ namespace }}'
+        definition: '{{ custom_resource|from_yaml }}'
+        wait: yes
+        wait_timeout: 300
+        wait_condition:
+          type: Running
+          reason: Successful
+          status: "True"
+    rescue:
+    - name: Collect logs for operator pod
+      k8s_log:
+        api_version: v1
+        kind: Pod
+        namespace: '{{ namespace }}'
+        label_selectors:
+        - name=sonarqube-operator
 
   - name: Get Pods
     k8s_info:
