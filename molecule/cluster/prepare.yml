@@ -23,7 +23,7 @@
 
   - name: Create RBAC resources
     k8s:
-      definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
+      definition: "{{ lookup('template', '/'.join([deploy_dir, item]))|regex_replace('REPLACE_ME', namespace) }}"
       namespace: '{{ namespace }}'
     loop:
     - cluster_role.yaml

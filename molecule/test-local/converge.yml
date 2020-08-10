@@ -37,5 +37,6 @@
       namespace: '{{ namespace }}'
       definition: "{{ lookup('template', operator_template) }}"
       wait: yes
-    vars:
+    changed_when: false  # k8s appears to report changed state here when it shouldn't
+    vars:                #  (also we're not really testing this, so skip it)
       pull_policy: Never
