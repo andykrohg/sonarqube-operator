@@ -8,6 +8,8 @@ galaxy_info:
     - openshift
     - kubernetes
     - k8s
-    - ansible-operator
+    - operator
     - sonarqube
+  platforms:
+    - name: GenericLinux
 dependencies: []
