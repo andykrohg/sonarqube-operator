@@ -11,6 +11,6 @@ script:
   - molecule test -s test-local
 deploy:
   provider: script
-  script: ./build.sh -b quay -d -l -t $OPERATOR_SDK_VERSION -o -- --build-arg=OPERATOR_SDK_VERSION=$OPERATOR_SDK_VERSION
+  script: ./build.sh -b quay -l -t $OPERATOR_SDK_VERSION -o -- --build-arg=OPERATOR_SDK_VERSION=$OPERATOR_SDK_VERSION
   on:
     branch: master
