@@ -15,7 +15,7 @@
     changed_when: false
 
   - name: Build Operator Image
-    shell: ./build.sh -b local -d -t testing -o
+    command: ./build.sh -b local -d -t testing -o
     register: build_cmd
     changed_when: not hash or (hash and hash not in cmd_out)
     vars:
