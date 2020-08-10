@@ -26,6 +26,6 @@
       definition: "{{ lookup('template', '/'.join([deploy_dir, item])) }}"
       namespace: '{{ namespace }}'
     loop:
-    - role.yaml
-    - role_binding.yaml
+    - cluster_role.yaml
+    - cluster_role_binding.yaml
     - service_account.yaml
