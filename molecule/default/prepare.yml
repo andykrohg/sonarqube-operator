@@ -8,6 +8,9 @@
       dest: '{{ kubeconfig_file }}'
       flat: yes
       src: /root/.kube/config
+    register: kubeconfig_fetch
+    until: not kubeconfig_fetch.failed
+    retries: 3
 
   - name: Change the kubeconfig port to the proper value
     replace:
