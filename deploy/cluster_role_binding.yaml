@@ -8,6 +8,6 @@ subjects:
   # Replace this with the namespace the operator is deployed in.
   namespace: REPLACE_ME
 roleRef:
-  kind: Role
+  kind: ClusterRole
   name: sonarqube-operator
   apiGroup: rbac.authorization.k8s.io
