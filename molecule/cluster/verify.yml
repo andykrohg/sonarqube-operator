@@ -17,7 +17,7 @@
       k8s:
         state: present
         namespace: '{{ namespace }}'
-        definition: '{{ custom_resource|from_yaml }}'
+        definition: '{{ custom_resource | from_yaml | combine({"spec":{"postgresql_image":"postgres:10"}}) }}'
         wait: yes
         wait_timeout: 300
         wait_condition:
