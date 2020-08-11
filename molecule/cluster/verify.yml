@@ -17,13 +17,18 @@
       k8s:
         state: present
         namespace: '{{ namespace }}'
-        definition: '{{ custom_resource | from_yaml | combine({"spec":{"postgresql_image":"postgres:10"}}) }}'
+        definition: '{{ custom_resource | from_yaml | combine(cr_adjustments) }}'
         wait: yes
         wait_timeout: 300
         wait_condition:
           type: Running
           reason: Successful
           status: "True"
+      vars:
+        cr_adjustments:
+          spec:
+            postgresql_image: postgres
+            postgresql_image_tag: '10'
 
     rescue:
     - name: Collect logs for operator pod
