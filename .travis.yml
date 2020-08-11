@@ -5,6 +5,7 @@ services:
   - docker
 install:
   - pip3 install docker==4.2.2 molecule ansible-lint yamllint flake8 openshift jmespath
+  - ansible-galaxy collection install -r requirements.yml
 env:
   - OPERATOR_SDK_VERSION=0.19.2
 script:
