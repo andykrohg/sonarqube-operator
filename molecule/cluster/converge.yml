@@ -17,7 +17,8 @@
   - name: Create the Operator Deployment
     k8s:
       namespace: '{{ namespace }}'
-      definition: "{{ lookup('template', '/'.join([template_dir, 'operator.yaml.j2'])) }}"
+      definition: "{{ lookup('template', '/'.join([template_dir, 'operator.yaml.j2'])) | from_yaml | \
+                      combine({'spec':{'postgresql_image':'postgres:10'}}) }}"
       wait: yes
     vars:
       image: '{{ operator_image }}'
