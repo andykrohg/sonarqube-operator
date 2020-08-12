@@ -7,8 +7,8 @@
 # - SonarqubeVolumeSize
 # - SonarqubeSsl
 # The following variables come from the ansible-operator
-# - meta.namespace
-# - meta.name (from the name of the CR)
+# - ansible_operator_meta.namespace
+# - ansible_operator_meta.name (from the name of the CR)
 
 - hosts: localhost
   gather_facts: no
@@ -17,8 +17,8 @@
     include_role:
       name: ./roles/postgresql-ocp
     vars:
-      _postgresql_namespace: "{{ meta.namespace }}"
-      _postgresql_name: "postgresql-{{ meta.name }}"
+      _postgresql_namespace: "{{ ansible_operator_meta.namespace }}"
+      _postgresql_name: "postgresql-{{ ansible_operator_meta.name }}"
       _postgresql_database_name: "sonardb"
       _postgresql_user: "sonar"
       _postgresql_password: "sonar"
@@ -30,13 +30,13 @@
     include_role:
       name: ./roles/sonarqube-ocp
     vars:
-      _sonarqube_namespace: "{{ meta.namespace }}"
-      _sonarqube_name: "{{ sonarqube_service_name | d( meta.name) }}"
+      _sonarqube_namespace: "{{ ansible_operator_meta.namespace }}"
+      _sonarqube_name: "{{ sonarqube_service_name | d( ansible_operator_meta.name) }}"
       _sonarqube_ssl: "{{ sonarqube_ssl|d(False)|bool }}"
       _sonarqube_route: "{{ sonarqube_route | d('') }}"
       _sonarqube_image_tag: "{{ sonarqube_image_tag | d('latest') }}"
       _sonarqube_volume_size: "{{ sonarqube_volume_size |d('1Gi') }}"
-      _sonarqube_postgresql_service_name: "postgresql-{{ meta.name }}"
+      _sonarqube_postgresql_service_name: "postgresql-{{ ansible_operator_meta.name }}"
       _sonarqube_postgresql_database_name: sonardb
       _sonarqube_postgresql_user: sonar
       _sonarqube_postgresql_password: sonar
