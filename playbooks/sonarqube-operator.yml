@@ -12,6 +12,11 @@
 
 - hosts: localhost
   gather_facts: no
+  vars:
+    default_postgresql_image: registry.redhat.io/rhscl/postgresql-10-rhel7
+    default_postgresql_tag: latest
+    default_sonarqube_image: quay.io/redhatgov/sonarqube
+    default_sonarqube_tag: latest
   tasks:
   - name: Set up PostgreSQL
     include_role:
@@ -19,12 +24,12 @@
     vars:
       _postgresql_namespace: "{{ ansible_operator_meta.namespace }}"
       _postgresql_name: "postgresql-{{ ansible_operator_meta.name }}"
-      _postgresql_database_name: "sonardb"
-      _postgresql_user: "sonar"
-      _postgresql_password: "sonar"
-      _postgresql_volume_size: "{{ postgresql_volume_size|d('1Gi') }}"
-      _postgresql_image: "{{ postgresql_image | d('registry.redhat.io/rhscl/postgresql-10-rhel7') }}"
-      _postgresql_image_tag: "{{ postgresql_image_tag | d('latest') }}"
+      _postgresql_database_name: sonardb
+      _postgresql_user: sonar
+      _postgresql_password: sonar
+      _postgresql_volume_size: "{{ postgresql_volume_size | d('1Gi') }}"
+      _postgresql_image: "{{ postgresql_image | d(default_postgresql_image) }}"
+      _postgresql_image_tag: "{{ postgresql_image_tag | d(default_postgresql_tag) }}"
 
   - name: Set up Sonarqube
     include_role:
@@ -34,8 +39,9 @@
       _sonarqube_name: "{{ sonarqube_service_name | d( ansible_operator_meta.name) }}"
       _sonarqube_ssl: "{{ sonarqube_ssl|d(False)|bool }}"
       _sonarqube_route: "{{ sonarqube_route | d('') }}"
-      _sonarqube_image_tag: "{{ sonarqube_image_tag | d('latest') }}"
-      _sonarqube_volume_size: "{{ sonarqube_volume_size |d('1Gi') }}"
+      _sonarqube_image: "{{ sonarqube_image | d(default_sonarqube_image) }}"
+      _sonarqube_image_tag: "{{ sonarqube_image_tag | d(default_sonarqube_tag) }}"
+      _sonarqube_volume_size: "{{ sonarqube_volume_size | d('1Gi') }}"
       _sonarqube_postgresql_service_name: "postgresql-{{ ansible_operator_meta.name }}"
       _sonarqube_postgresql_database_name: sonardb
       _sonarqube_postgresql_user: sonar
