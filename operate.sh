@@ -90,7 +90,13 @@ OPTIONS
     -b|--build-only                 Do not attempt to deploy the operator, just
                                       build artifacts for it.
     -p|--push-only                  Do not attempt to deploy the operator, just
-                                      build and push the image.
+                                      build and push the image to the repository
+                                      it's tagged with. NOTE: You must log in
+                                      to that repository first!
+
+When specified without -b or -p, will attempt to build the operator, push it to
+  the tagged repository (if you're logged in!), install the resources and deploy
+  the operator to the cached login on a Kubernetes cluster.
 EOF
 }
 
@@ -187,6 +193,8 @@ function build_artifacts() {
 }
 
 function push_images() {
+    # Push the images to the logged in repository
+    #   NOTE: REQUIRES YOU TO ACTUALLY LOG IN FIRST
     build_artifacts || return 1
     for tag in $version latest; do
         error_run "Building $IMG:$tag" make docker-build IMG=$IMG:$tag || return 1
@@ -230,12 +238,18 @@ function remove_artifacts() {
 }
 
 if [ "$REMOVE_OPERATOR" ]; then
+    # Try to remove everything from a cluster
     uninstall_operator || :
+    # Remove all artifacts from the tree no matter what
     remove_artifacts
 elif [ "$BUILD_ONLY" ]; then
+    # Just build the artifacts necessary to deploy the operator from an image
     build_artifacts
 elif [ "$PUSH_ONLY" ]; then
+    # Push the images to a repository
+    #   NOTE: REQUIRES YOU TO ACTUALLY LOG IN FIRST
     push_images
 else
+    # Build, push, and install the operator to a cached cluster login
     install_operator
 fi
