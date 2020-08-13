@@ -111,13 +111,16 @@ KIND=
 
 # Load the configuration
 if [ -f operate.conf ]; then
+    # This uses some simple python to read the .conf file in true ini format,
+    #   outputting the variables in an exportable fashion so we can eval them
+    #   in the warn_run.
     warn_run "Loading configuration from operate.conf" $(python -c 'import configparser
 config = configparser.ConfigParser()
 config.read("operate.conf")
 print("\n".join([
-    f"export {k.upper()}=\"{v}\""
+    f"{k.upper()}=\"{v}\""
     for k, v in config["operator"].items()
-]))')
+]))') ||:
 fi
 
 while [ $# -gt 0 ]; do
@@ -134,11 +137,9 @@ while [ $# -gt 0 ]; do
             ;;
         -i|--image=*)
             IMG=$(parse_arg -i "$1" "$2") || shift
-            export IMG
             ;;
         -k|--kind=*)
             KIND=$(parse_arg -k "$1" "$2") || shift
-            export KIND
             ;;
         *)
             print_usage >&2
@@ -147,27 +148,73 @@ while [ $# -gt 0 ]; do
     esac ; shift
 done
 
-if [ "$REMOVE_OPERATOR" ]; then
-    warn_run "Removing operator files" rm -rf PROJECT Makefile Dockerfile bin config molecule ||:
+components_updated=
+artifacts_built=
+operator_installed=
 
-    exit $?
-fi
-
-error_run "Updating the Operator SDK manager" pip install --user --upgrade git+https://git.jharmison.com/jharmison/operator-sdk-manager.git
-error_run "Updating the Operator SDK" 'version=$(operator-sdk-manager update -vvvv | cut -d" " -f 3)'
-error_run "Initializing Ansible Operator with operator-sdk $version" operator-sdk init --plugins=ansible --domain=io
-error_run "Creating API config with operator-sdk $version" operator-sdk create api --group redhatgov --version v1alpha1 --kind $KIND
-if which kubectl &>/dev/null; then
-    if kubectl get nodes &>/dev/null; then
-        for tag in 1.0.0 latest; do
-            error_run "Building tag $tag" make docker-build IMG=$IMG:$tag
-            error_run "Pushing tag $tag" make docker-push IMG=$IMG:$tag
-        done
-        error_run "Installing operator resources" make install
-        error_run "Deploying operator" make deploy IMG=$IMG:latest
-    else
-        warn_run "No kubernetes credentials cached?" false
+function update_components() {
+    # Ensure we have the things we need to work with the operator-sdk
+    if [ -z "$components_updated" ]; then
+        error_run "Updating the Operator SDK manager" pip install --user --upgrade git+https://git.jharmison.com/jharmison/operator-sdk-manager.git || return 1
+        error_run "Updating the Operator SDK" 'version=$(operator-sdk-manager update -vvvv | cut -d" " -f 3)' || return 1
     fi
+    components_updated=true
+}
+
+function build_artifacts() {
+    # Build the operator artifacts from the provided configuration
+    update_components
+    if [ -z "$artifacts_built" ]; then
+        if [ -d config ]; then
+            remove_artifacts
+        fi
+        error_run "Initializing Ansible Operator with operator-sdk $version" operator-sdk init --plugins=ansible --domain=io || return 1
+        error_run "Creating API config with operator-sdk $version" operator-sdk create api --group redhatgov --version v1alpha1 --kind $KIND || return 1
+    fi
+    artifacts_built=true
+}
+
+function validate_cluster() {
+    # Make sure we've got the tooling and cached logins to support application
+    error_run "Checking for kubectl in path" which kubectl || return 1
+    error_run "Checking for logged in status on cluster" kubectl get nodes || return 1
+}
+
+function install_operator() {
+    # Installs the operator defined by built artifacts to the locally logged in
+    #   cluster
+    build_artifacts || return 1
+    if [ -z "$operator_installed" ]; then
+        validate_cluster || return 1
+        for tag in 1.0.0 latest; do
+            error_run "Building $IMG:$tag" make docker-build IMG=$IMG:$tag || return 1
+            error_run "Pushing $IMG:$tag" make docker-push IMG=$IMG:$tag || return 1
+        done
+        error_run "Installing operator resources" make install || return 1
+        error_run "Deploying operator" make deploy IMG=$IMG:latest || return 1
+    fi
+    operator_installed=true
+}
+
+function uninstall_operator() {
+    # Uninstalls the operator defined by the built artifacts from the locally
+    #   logged in cluster
+    build_artifacts || return 1
+    validate_cluster || return 1
+    warn_run "Undeploying operator" make undeploy IMG=$IMG:latest || :
+    warn_run "Uninstalling operator resources" make uninstall || :
+    operator_installed=
+}
+
+function remove_artifacts() {
+    # Remove operator artifacts from the tree
+    warn_run "Removing operator files" rm -rf PROJECT Makefile Dockerfile bin config molecule roles/.placeholder playbooks/.placeholder || :
+    artifacts_built=
+}
+
+if [ "$REMOVE_OPERATOR" ]; then
+    uninstall_operator
+    remove_artifacts
 else
-    warn_run "kubectl not in path" false
+    install_operator
 fi
