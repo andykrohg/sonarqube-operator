@@ -67,7 +67,8 @@ fi
 
 function print_usage() {
     wrap "usage: $(basename $0) [-h|--help] | [-r|--remove] [-v|--verbose] " \
-         "[(-k |--kind=)KIND] [(-i |--image=)IMG]"
+         "[(-k |--kind=)KIND] [(-i |--image=)IMG] [-b|--build-only] " \
+         "[-p|--push-only]"
 }
 
 function print_help() {
@@ -86,6 +87,10 @@ OPTIONS
                                       stderr, making it ugly but debuggable.
     -i |--image=IMG                 Set the image name for the operator to IMG
     -k |--kind=KIND                 Set the Kind of the CRD to KIND
+    -b|--build-only                 Do not attempt to deploy the operator, just
+                                      build artifacts for it.
+    -p|--push-only                  Do not attempt to deploy the operator, just
+                                      build and push the image.
 EOF
 }
 
@@ -108,6 +113,7 @@ function parse_arg() {
 REMOVE_OPERATOR=
 IMG=
 KIND=
+BUILD_ONLY=
 
 # Load the configuration
 if [ -f operate.conf ]; then
@@ -140,6 +146,12 @@ while [ $# -gt 0 ]; do
             ;;
         -k|--kind=*)
             KIND=$(parse_arg -k "$1" "$2") || shift
+            ;;
+        -b|--build-only)
+            BUILD_ONLY=true
+            ;;
+        -p|--push-only)
+            PUSH_ONLY=true
             ;;
         *)
             print_usage >&2
@@ -174,6 +186,14 @@ function build_artifacts() {
     artifacts_built=true
 }
 
+function push_images() {
+    build_artifacts || return 1
+    for tag in $version latest; do
+        error_run "Building $IMG:$tag" make docker-build IMG=$IMG:$tag || return 1
+        error_run "Pushing $IMG:$tag" make docker-push IMG=$IMG:$tag || return 1
+    done
+}
+
 function validate_cluster() {
     # Make sure we've got the tooling and cached logins to support application
     error_run "Checking for kubectl in path" which kubectl || return 1
@@ -186,10 +206,7 @@ function install_operator() {
     build_artifacts || return 1
     if [ -z "$operator_installed" ]; then
         validate_cluster || return 1
-        for tag in 1.0.0 latest; do
-            error_run "Building $IMG:$tag" make docker-build IMG=$IMG:$tag || return 1
-            error_run "Pushing $IMG:$tag" make docker-push IMG=$IMG:$tag || return 1
-        done
+        push_images || return 1
         error_run "Installing operator resources" make install || return 1
         error_run "Deploying operator" make deploy IMG=$IMG:latest || return 1
     fi
@@ -213,8 +230,12 @@ function remove_artifacts() {
 }
 
 if [ "$REMOVE_OPERATOR" ]; then
-    uninstall_operator
+    uninstall_operator || :
     remove_artifacts
+elif [ "$BUILD_ONLY" ]; then
+    build_artifacts
+elif [ "$PUSH_ONLY" ]; then
+    push_images
 else
     install_operator
 fi
