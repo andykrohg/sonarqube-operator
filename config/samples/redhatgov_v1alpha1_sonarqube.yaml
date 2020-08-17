@@ -3,4 +3,4 @@ kind: Sonarqube
 metadata:
   name: sonarqube-sample
 spec:
-  size: 3
+  sonarqube_image_pull_policy: Always
