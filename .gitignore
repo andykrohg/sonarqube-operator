@@ -4,9 +4,4 @@
 tags
 .quay_creds
 bin
-config
-molecule
-Makefile
-Dockerfile
-PROJECT
 .placeholder

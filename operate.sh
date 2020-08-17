@@ -67,8 +67,8 @@ fi
 
 function print_usage() {
     wrap "usage: $(basename $0) [-h|--help] | [-r|--remove] [-v|--verbose] " \
-         "[(-k |--kind=)KIND] [(-i |--image=)IMG] [-b|--build-only] " \
-         "[-p|--push-only]"
+         "[(-k |--kind=)KIND] [(-i |--image=)IMG] [-b|--build-artifacts] " \
+         "[-p|--push-images] [-d|--deploy-cr]"
 }
 
 function print_help() {
@@ -76,27 +76,27 @@ function print_help() {
     cat << EOF
 
 Build an ansible-based operator using only requirements.yml, watches.yml, and
-the requisite playbooks/ and roles/ files on the fly. Can be applied to a
-cluster directly, packaged into a bundle, or kustomized.
+the requisite playbooks/ and roles/ files on the fly. Can complete any and all
+stages as part of building artifacts, pushing, installing, and deploying the
+application to a cluster directly. Additional bundling or kustomization is
+available as well.
 
 OPTIONS
     -h|--help                       Print this help page and exit.
-    -r|--remove                     Remove any installed/built operator and
-                                      artifacts of that build.
     -v|--verbose                    Output all command output directly to
                                       stderr, making it ugly but debuggable.
     -i |--image=IMG                 Set the image name for the operator to IMG
     -k |--kind=KIND                 Set the Kind of the CRD to KIND
-    -b|--build-only                 Do not attempt to deploy the operator, just
-                                      build artifacts for it.
-    -p|--push-only                  Do not attempt to deploy the operator, just
-                                      build and push the image to the repository
-                                      it's tagged with. NOTE: You must log in
-                                      to that repository first!
+    -r|--remove                     Remove any installed/built operator and
+                                      artifacts of that build. Do not build,
+                                      push, install, or deploy.
+    -b|--build-artifacts            Rebuild deployment artifacts, removing them
+                                      and rebuilding as necessary.
+    -p|--push-images                Build and push new operator images to your
+                                      tagged registry - you must already be
+                                      logged in.
+    -d|--deploy-cr                  Deploy a CR for the operator to the cluster.
 
-When specified without -b or -p, will attempt to build the operator, push it to
-  the tagged repository (if you're logged in!), install the resources and deploy
-  the operator to the cached login on a Kubernetes cluster.
 EOF
 }
 
@@ -119,7 +119,9 @@ function parse_arg() {
 REMOVE_OPERATOR=
 IMG=
 KIND=
-BUILD_ONLY=
+PUSH_IMAGES=
+BUILD_ARTIFACTS=
+DEPLOY_CR=
 
 # Load the configuration
 if [ -f operate.conf ]; then
@@ -153,11 +155,14 @@ while [ $# -gt 0 ]; do
         -k|--kind=*)
             KIND=$(parse_arg -k "$1" "$2") || shift
             ;;
-        -b|--build-only)
-            BUILD_ONLY=true
+        -b|--build-artifacts)
+            BUILD_ARTIFACTS=true
             ;;
-        -p|--push-only)
-            PUSH_ONLY=true
+        -p|--push-images)
+            PUSH_IMAGES=true
+            ;;
+        -d|--deploy-cr)
+            DEPLOY_CR=true
             ;;
         *)
             print_usage >&2
@@ -181,7 +186,6 @@ function update_components() {
 
 function build_artifacts() {
     # Build the operator artifacts from the provided configuration
-    update_components
     if [ -z "$artifacts_built" ]; then
         if [ -d config ]; then
             remove_artifacts
@@ -195,7 +199,6 @@ function build_artifacts() {
 function push_images() {
     # Push the images to the logged in repository
     #   NOTE: REQUIRES YOU TO ACTUALLY LOG IN FIRST
-    build_artifacts || return 1
     for tag in $version latest; do
         error_run "Building $IMG:$tag" make docker-build IMG=$IMG:$tag || return 1
         error_run "Pushing $IMG:$tag" make docker-push IMG=$IMG:$tag || return 1
@@ -211,10 +214,8 @@ function validate_cluster() {
 function install_operator() {
     # Installs the operator defined by built artifacts to the locally logged in
     #   cluster
-    build_artifacts || return 1
     if [ -z "$operator_installed" ]; then
         validate_cluster || return 1
-        push_images || return 1
         error_run "Installing operator resources" make install || return 1
         error_run "Deploying operator" make deploy IMG=$IMG:latest || return 1
     fi
@@ -224,7 +225,6 @@ function install_operator() {
 function uninstall_operator() {
     # Uninstalls the operator defined by the built artifacts from the locally
     #   logged in cluster
-    build_artifacts || return 1
     validate_cluster || return 1
     warn_run "Undeploying operator" make undeploy IMG=$IMG:latest || :
     warn_run "Uninstalling operator resources" make uninstall || :
@@ -237,19 +237,29 @@ function remove_artifacts() {
     artifacts_built=
 }
 
+function deploy_cr() {
+    error_run "Deploying custom resource sample" kubectl apply -f config/samples/redhatgov*.yaml || return 1
+}
+
 if [ "$REMOVE_OPERATOR" ]; then
     # Try to remove everything from a cluster
     uninstall_operator || :
-    # Remove all artifacts from the tree no matter what
-    remove_artifacts
-elif [ "$BUILD_ONLY" ]; then
-    # Just build the artifacts necessary to deploy the operator from an image
-    build_artifacts
-elif [ "$PUSH_ONLY" ]; then
-    # Push the images to a repository
-    #   NOTE: REQUIRES YOU TO ACTUALLY LOG IN FIRST
-    push_images
 else
-    # Build, push, and install the operator to a cached cluster login
+    if [ "$BUILD_ARTIFACTS" ]; then
+        # Build the artifacts necessary to deploy the operator from an image
+        #   NOTE: Removes all existing tweaks to built artifacts!
+        update_components
+        build_artifacts
+    fi
+    if [ "$PUSH_IMAGES" ]; then
+        # Push the images to a repository
+        #   NOTE: REQUIRES YOU TO ACTUALLY LOG IN FIRST
+        push_images
+    fi
+    # Install all of the necessary artifacts
     install_operator
+    # Apply the artifacts to the currently logged in cluster
+    if [ "$DEPLOY_CR" ]; then
+        deploy_cr
+    fi
 fi
