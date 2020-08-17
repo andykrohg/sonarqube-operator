@@ -68,7 +68,7 @@ fi
 function print_usage() {
     wrap "usage: $(basename $0) [-h|--help] | [-r|--remove] [-v|--verbose] " \
          "[(-k |--kind=)KIND] [(-i |--image=)IMG] [-b|--build-artifacts] " \
-         "[-p|--push-images] [-d|--deploy-cr]"
+         "[-p|--push-images] [-d|--deploy-cr] [-u|--undeploy-cr]"
 }
 
 function print_help() {
@@ -96,6 +96,7 @@ OPTIONS
                                       tagged registry - you must already be
                                       logged in.
     -d|--deploy-cr                  Deploy a CR for the operator to the cluster.
+    -u|--undeploy-cr                Undeploy the CR for the operator.
 
 EOF
 }
@@ -122,6 +123,7 @@ KIND=
 PUSH_IMAGES=
 BUILD_ARTIFACTS=
 DEPLOY_CR=
+UNDEPLOY_CR=
 
 # Load the configuration
 if [ -f operate.conf ]; then
@@ -163,6 +165,11 @@ while [ $# -gt 0 ]; do
             ;;
         -d|--deploy-cr)
             DEPLOY_CR=true
+            UNDEPLOY_CR=
+            ;;
+        -u|--undeploy-cr)
+            UNDEPLOY_CR=true
+            DEPLOY_CR=
             ;;
         *)
             print_usage >&2
@@ -174,6 +181,7 @@ done
 components_updated=
 artifacts_built=
 operator_installed=
+cluster_validated=
 
 function update_components() {
     # Ensure we have the things we need to work with the operator-sdk
@@ -206,9 +214,12 @@ function push_images() {
 }
 
 function validate_cluster() {
-    # Make sure we've got the tooling and cached logins to support application
-    error_run "Checking for kubectl in path" which kubectl || return 1
-    error_run "Checking for logged in status on cluster" kubectl get nodes || return 1
+    if [ -z "$cluster_validated" ]; then
+        # Make sure we've got the tooling and cached logins to support application
+        error_run "Checking for kubectl in path" which kubectl || return 1
+        error_run "Checking for logged in status on cluster" kubectl get nodes || return 1
+    fi
+    cluster_validated=true
 }
 
 function install_operator() {
@@ -226,6 +237,7 @@ function uninstall_operator() {
     # Uninstalls the operator defined by the built artifacts from the locally
     #   logged in cluster
     validate_cluster || return 1
+    undeploy_cr
     warn_run "Undeploying operator" make undeploy IMG=$IMG:latest || :
     warn_run "Uninstalling operator resources" make uninstall || :
     operator_installed=
@@ -238,7 +250,13 @@ function remove_artifacts() {
 }
 
 function deploy_cr() {
+    validate_cluster || return 1
     error_run "Deploying custom resource sample" kubectl apply -f config/samples/redhatgov*.yaml || return 1
+}
+
+function undeploy_cr() {
+    validate_cluster || return 1
+    warn_run "Undeploying custom resource sample" kubectl delete -f config/samples/redhatgov*.yaml ||:
 }
 
 if [ "$REMOVE_OPERATOR" ]; then
@@ -261,5 +279,7 @@ else
     # Apply the artifacts to the currently logged in cluster
     if [ "$DEPLOY_CR" ]; then
         deploy_cr
+    elif [ "$UNDEPLOY_CR" ]; then
+        undeploy_cr
     fi
 fi
