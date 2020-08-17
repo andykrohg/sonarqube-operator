@@ -22,7 +22,7 @@ spec:
       containers:
       - name: sonarqube
         image: "{{ _sonarqube_image }}:{{ _sonarqube_image_tag }}"
-        imagePullPolicy: {{ _sonarqube_pull_policy|default("IfNotPresent") }}
+        imagePullPolicy: {{ _sonarqube_image_pull_policy|default("IfNotPresent") }}
         ports:
         - containerPort: 9000
           protocol: TCP
