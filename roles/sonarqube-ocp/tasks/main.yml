@@ -3,6 +3,9 @@
 - name: Set OpenShift objects for SonarQube to {{ _sonarqube_state }}
   k8s:
     state: "{{ _sonarqube_state }}"
+    merge_type:
+    - strategic-merge
+    - merge
     definition: "{{ lookup('template', item ) | from_yaml }}"
   loop:
   - service_account.yml.j2
