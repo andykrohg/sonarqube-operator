@@ -41,6 +41,7 @@
       _sonarqube_route: "{{ sonarqube_route | d('') }}"
       _sonarqube_image: "{{ sonarqube_image | d(default_sonarqube_image) }}"
       _sonarqube_image_tag: "{{ sonarqube_image_tag | d(default_sonarqube_tag) }}"
+      _sonarqube_image_pull_policy: "{{ sonarqube_image_pull_policy | d('IfNotPresent') }}"
       _sonarqube_volume_size: "{{ sonarqube_volume_size | d('1Gi') }}"
       _sonarqube_postgresql_service_name: "postgresql-{{ ansible_operator_meta.name }}"
       _sonarqube_postgresql_database_name: sonardb
