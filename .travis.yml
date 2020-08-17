@@ -6,7 +6,6 @@ services:
 install:
 - pip3 install docker==4.2.2 molecule ansible-lint yamllint flake8 openshift jmespath
 - ansible-galaxy collection install -r requirements.yml
-- ./operate.sh --build-only --verbose
 script:
 - OPERATORDIR="$(pwd)"
 - make kustomize
@@ -14,6 +13,6 @@ script:
 - KUSTOMIZE_PATH=${KUSTOMIZE} TEST_OPERATOR_NAMESPACE=default molecule test -s kind
 deploy:
   provider: script
-  script: ./operate.sh --push-only --verbose
+  script: hack/operate.sh --push-images --verbose
   on:
     branch: master
