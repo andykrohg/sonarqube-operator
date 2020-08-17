@@ -1,6 +1,11 @@
 #!/bin/bash
 
-cd $(dirname $(realpath $0))
+SCRIPT_ROOT=$(dirname $(realpath $0))
+if [ $(basename "$SCRIPT_ROOT") = 'hack' ]; then
+    cd "$SCRIPT_ROOT/.."
+else
+    cd "$SCRIPT_ROOT"
+fi
 
 function now() {
     date '+%Y%m%dT%H%M%S'
