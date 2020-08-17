@@ -7,6 +7,14 @@ else
     cd "$SCRIPT_ROOT"
 fi
 
+if ! which docker &>/dev/null; then
+    if which podman &>/dev/null; then
+        function docker { podman "${@}" ; }
+    else
+        echo "We may not be able to do docker things..." >&2
+    fi
+fi
+
 function now() {
     date '+%Y%m%dT%H%M%S'
 }
@@ -211,7 +219,9 @@ function build_artifacts() {
 
 function push_images() {
     # Push the images to the logged in repository
-    #   NOTE: REQUIRES YOU TO ACTUALLY LOG IN FIRST
+    if [ -n "$QUAY_USER" -a -n "$QUAY_PASSWORD" ]; then
+        docker login -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io || return 1
+    fi
     for tag in $version latest; do
         error_run "Building $IMG:$tag" make docker-build IMG=$IMG:$tag || return 1
         error_run "Pushing $IMG:$tag" make docker-push IMG=$IMG:$tag || return 1
