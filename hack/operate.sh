@@ -139,13 +139,19 @@ DEPLOY_CR=
 UNDEPLOY_CR=
 
 # Load the configuration
+config=
 if [ -f operate.conf ]; then
+    config=operate.conf
+elif [ -f hack/operate.conf ]; then
+    config=hack/operate.conf
+fi
+if [ "$config" ]; then
     # This uses some simple python to read the .conf file in true ini format,
     #   outputting the variables in an exportable fashion so we can eval them
     #   in the warn_run.
     warn_run "Loading configuration from operate.conf" $(python -c 'import configparser
 config = configparser.ConfigParser()
-config.read("operate.conf")
+config.read("'"$config"'")
 print("\n".join([
     f"{k.upper()}=\"{v}\""
     for k, v in config["operator"].items()
