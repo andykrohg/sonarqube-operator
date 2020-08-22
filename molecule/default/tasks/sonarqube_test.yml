@@ -13,7 +13,13 @@
   vars:
     cr_file: 'redhatgov_v1alpha1_sonarqube.yaml'
 
-- name: Add assertions here
-  assert:
-    that: false
-    fail_msg: FIXME Add real assertions for your operator
+# TODO:
+#   - Setup nginx Ingress before application
+#   - Retrieve ingress URI
+#   - Validate that SonarQube can be reached
+#   - Validate SonarQube can be used
+
+# - name: Add assertions here
+#   assert:
+#     that: false
+#     fail_msg: FIXME Add real assertions for your operator
