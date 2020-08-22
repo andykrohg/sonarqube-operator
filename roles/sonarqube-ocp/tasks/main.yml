@@ -6,13 +6,21 @@
     merge_type:
     - strategic-merge
     - merge
-    definition: "{{ lookup('template', item ) | from_yaml }}"
+    definition: "{{ lookup('template', item) | from_yaml }}"
   loop:
   - service_account.yml.j2
-  - persistent_volume_claim.yml.j2
   - service.yml.j2
   - route.yml.j2
   - deployment.yml.j2
+
+- name: Set PersistentVolumeClaim for SonarQube to {{ _sonarqube_state }}
+  when: _sonarqube_persistent|bool
+  k8s:
+    state: "{{ _sonarqube_state }}"
+    merge_type:
+    - strategic-merge
+    - merge
+    definition: "{{ lookup('template', 'persistent_volume_claim.yml.j2') | from_yaml }}"
 
 - name: Wait until application is available
   when:

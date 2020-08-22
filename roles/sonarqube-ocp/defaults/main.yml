@@ -9,6 +9,7 @@ _sonarqube_postgresql_service_name: postgresql
 _sonarqube_postgresql_database_name: sonardb
 _sonarqube_postgresql_user: sonar
 _sonarqube_postgresql_password: sonar
+_sonarqube_persistent: true
 _sonarqube_volume_size: 1Gi
 _sonarqube_memory_request: 2Gi
 _sonarqube_memory_limit: 3Gi

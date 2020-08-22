@@ -6,6 +6,8 @@ services:
 install:
 - pip3 install docker==4.2.2 molecule ansible-lint yamllint flake8 openshift jmespath
 - ansible-galaxy collection install -r requirements.yml
+- curl -Lo $HOME/.local/bin/kind https://kind.sigs.k8s.io/dl/v0.8.1/kind-linux-amd64
+- chmod +x $HOME/.local/bin/kind
 script:
 - OPERATORDIR="$(pwd)"
 - make kustomize
