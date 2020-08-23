@@ -12,7 +12,7 @@
   - service.yml.j2
   - deployment.yml.j2
 
-- name: Expose the Sonarqube endpoint
+- name: Set Sonarqube Ingress/Route to {{ _sonarqube_state }}
   when: item != 'None'
   k8s:
     state: "{{ _sonarqube_state }}"
@@ -21,7 +21,7 @@
     - merge
     definition: "{{ lookup('template', item + '.yml.j2') | from_yaml }}"
   loop:
-  - _sonarqube_expose_method
+  - '{{ _sonarqube_expose_method }}'
 
 - name: Set PersistentVolumeClaim for SonarQube to {{ _sonarqube_state }}
   when: _sonarqube_persistent|bool
