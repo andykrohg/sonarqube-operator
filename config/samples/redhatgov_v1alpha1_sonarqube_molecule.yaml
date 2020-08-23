@@ -12,4 +12,8 @@ spec:
       ssl: false
       kind: Ingress
       uri: localhost
+    resources:
+      cpu:
+        request: 500m
+        limit: 1000m
   persistent: false
