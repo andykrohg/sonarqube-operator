@@ -2,15 +2,15 @@
 
 == Overview
 
-This repository contains the code to build a Sonarqube Operator for Red Hat OpenShift Container Platform. It will not run on Kubernetes because it uses the `Route` object to provide access to Sonarqube.
+This repository contains the code to build a Sonarqube Operator for Kubernetes, including Red Hat OpenShift Container Platform.
 
-The Operator will create a *PostgreSQL* database with persistent storage and a *SonarQube* instance also with persistent storage connected to the PostgreSQL database.
+The Operator will create a *PostgreSQL* database and a *SonarQube* instance connected to the PostgreSQL database.
 
-It is implemented on top of the Red Hat https://github.com/operator-framework/operator-sdk[Operator SDK] - in particular the https://github.com/operator-framework/operator-sdk/blob/master/doc/ansible/user-guide.md[Ansible Operator].
+It is implemented on top of the Red Hat https://sdk.operatorframework.io/[Operator SDK] - in particular the https://sdk.operatorframework.io/docs/building-operators/ansible/[Ansible Operator].
 
 == Building the Operator
 
-There is a script `hack/operate.sh` which will download the prerequisites (operator-sdk etc), build the operator artifacts from operator-sdk defaults, package and push the operator container image, deploy the artifacts to a Kubernetes cluster, and create a `kind: Sonarqube` CR to deploy an instance. You should use the help page to look at what the various options do, but for the most part if you want to deploy to a cluster directly from this repo you could run `hack/operate.sh -d`.
+There is a script `hack/operate.sh` which will download the prerequisites (operator-sdk etc.), build the operator artifacts from operator-sdk defaults, package and push the operator container image, deploy the artifacts to a Kubernetes cluster, and create a `kind: Sonarqube` CR to deploy an instance. You should use the help page to look at what the various options do, but for the most part if you want to deploy SonarQube to a cluster directly from this repo you could run `hack/operate.sh -d`.
 
 Before running the script make sure to update the location of the container image to a repository you have access to. If you decide to build your own container image for the operator, make sure to update `hack/operate.conf` with an updated container image location and add the `-p` flag to `operate.sh`.
 
@@ -18,7 +18,7 @@ Before running the script make sure to update the location of the container imag
 
 === Common Installation Steps
 
-The installation of the Custom Resource Definition and Cluster Role requires *cluster-admin* privileges. After that regular users with `admin` privileges on their projects (which is automatically granted to the user who creates a project) can provision the SonarQube Operator in their projects and deploy instances of Sonarqube using the sonarqube.gpte.opentlc.com Custom Resource.
+The installation of the Custom Resource Definition and Cluster Role requires *cluster-admin* privileges. After that regular users with `admin` privileges on their projects (which is automatically granted to the user who creates a project) can provision the SonarQube Operator in their projects and deploy instances of Sonarqube using the sonarqube.redhatgov.io Custom Resource.
 
 Perform the following tasks as *cluster-admin*:
 
@@ -57,13 +57,15 @@ spec:
       src: registry.redhat.io/rhel8/postgresql-10
       tag: latest
   sonarqube:
-    ssl: true
-    route: special-sonarqube-route.apps.cluster.example.com
+    expose:
+      ssl: true                                             # There is currently no way to specify an alternate certificate
+      uri: special-sonarqube-route.apps.cluster.example.com # You can leave this field out on OpenShift to get the default
+      kind: Ingress                                         # This can be of kind Route on OpenShift
     image:
       src: quay.io/redhatgov/sonarqube
       tag: latest
       pullPolicy: IfNotPresent
-    volumeSize: 1Gi
+    volumeSize: 1Gi                                         # Only matters if `persistent: true`
     resources:
       memory:
         request: 2Gi
@@ -71,6 +73,7 @@ spec:
       cpu:
         request: 1
         limit: 2
+  persistent: true
 
 ----
 
@@ -112,14 +115,7 @@ The Operator adds ownerReference fields to all created objects - which means tha
 
 == Uninstalling the SonarQube Operator
 
-In case you wish to uninstall the SonarQube Operator make sure that there are no more SonarQube instances running. Once all SonarQube instances have been deleted simply delete the project the operator is running in.
-
-[source,sh]
-----
-oc delete project sonarqube
-----
-
-Then as *cluster-admin* delete the resources:
+In case you wish to uninstall the SonarQube Operator make sure that there are no more SonarQube instances running. Once all SonarQube instances have been deleted simply delete the operator and its resources with:
 
 [source,sh]
 ----
