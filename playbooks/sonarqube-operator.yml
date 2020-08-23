@@ -32,18 +32,25 @@
       name: ./roles/sonarqube-ocp
     vars:
       _sonarqube_namespace: "{{ ansible_operator_meta.namespace }}"
-      _sonarqube_name: "{{ sonarqube_service_name | d( ansible_operator_meta.name) }}"
-      _sonarqube_ssl: "{{ sonarqube.ssl | default(omit) }}"
-      _sonarqube_route: "{{ sonarqube.route | default(omit) }}"
+      _sonarqube_name: "{{ sonarqube_service_name | default(ansible_operator_meta.name) }}"
+
+      _sonarqube_expose_method: "{{ sonarqube.expose.kind | default(omit) }}"
+      _sonarqube_expose_uri: "{{ sonarqube.expose.uri | default(omit) }}"
+      _sonarqube_route: "{{ sonarqube.expose.uri | default(omit) }}"
+      _sonarqube_ssl: "{{ sonarqube.expose.ssl | default(omit) }}"
+
       _sonarqube_image: "{{ sonarqube.image.src | default(omit) }}"
       _sonarqube_image_tag: "{{ sonarqube.image.tag | default(omit) }}"
       _sonarqube_image_pull_policy: "{{ sonarqube.image.pullPolicy | default(omit) }}"
+
       _sonarqube_persistent: "{{ persistent | default(omit) }}"
       _sonarqube_volume_size: "{{ sonarqube.volumeSize | default(omit) }}"
+
       _sonarqube_postgresql_service_name: "postgresql-{{ ansible_operator_meta.name }}"
       _sonarqube_postgresql_database_name: sonardb
       _sonarqube_postgresql_user: sonar
       _sonarqube_postgresql_password: sonar
+
       _sonarqube_memory_request: "{{ sonarqube.resources.memory.request | default(omit) }}"
       _sonarqube_memory_limit: "{{ sonarqube.resources.memory.limit | default(omit) }}"
       _sonarqube_cpu_request: "{{ sonarqube.resources.cpu.request | default(omit) }}"

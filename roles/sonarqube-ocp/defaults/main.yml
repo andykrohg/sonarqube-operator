@@ -4,7 +4,6 @@ _sonarqube_state: present
 _sonarqube_namespace: sonarqube
 _sonarqube_name: sonarqube
 
-_sonarqube_ssl: True
 _sonarqube_postgresql_service_name: postgresql
 _sonarqube_postgresql_database_name: sonardb
 _sonarqube_postgresql_user: sonar
@@ -19,6 +18,7 @@ _sonarqube_wait_for_init: true
 _sonarqube_image: quay.io/redhatgov/sonarqube
 _sonarqube_image_tag: latest
 _sonarqube_image_pull_policy: IfNotPresent
-
-# Set to a valid route for the cluster to make a nicer route than svc-project.apps. Leave empty for default route
-_sonarqube_route: ""
+_sonarqube_expose_method: route
+_sonarqube_expose_uri: ""
+_sonarqube_route: "{{ _sonarqube_expose_uri }}"
+_sonarqube_ssl: True
