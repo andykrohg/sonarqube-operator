@@ -11,4 +11,5 @@ spec:
     expose:
       ssl: false
       kind: Ingress
+      uri: localhost
   persistent: false
