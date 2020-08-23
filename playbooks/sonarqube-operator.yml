@@ -22,10 +22,10 @@
       _postgresql_database_name: sonardb
       _postgresql_user: sonar
       _postgresql_password: sonar
-      _postgresql_persistent: "{{ persistent | default(omit) }}"
-      _postgresql_volume_size: "{{ postgresql.volumeSize | default(omit) }}"
-      _postgresql_image: "{{ postgresql.image.src | default(omit) }}"
-      _postgresql_image_tag: "{{ postgresql.image.tag | default(omit) }}"
+      _postgresql_persistent: "{{ persistent | default(True) }}"
+      _postgresql_volume_size: "{{ postgresql.volumeSize | default('1Gi') }}"
+      _postgresql_image: "{{ postgresql.image.src | default('registry.redhat.io/rhel8/postgresql-10') }}"
+      _postgresql_image_tag: "{{ postgresql.image.tag | default('latest') }}"
 
   - name: Set up Sonarqube
     include_role:
@@ -34,24 +34,23 @@
       _sonarqube_namespace: "{{ ansible_operator_meta.namespace }}"
       _sonarqube_name: "{{ sonarqube_service_name | default(ansible_operator_meta.name) }}"
 
-      _sonarqube_expose_method: "{{ sonarqube.expose.kind | default(omit) }}"
-      _sonarqube_expose_uri: "{{ sonarqube.expose.uri | default(omit) }}"
-      _sonarqube_route: "{{ sonarqube.expose.uri | default(omit) }}"
-      _sonarqube_ssl: "{{ sonarqube.expose.ssl | default(omit) }}"
+      _sonarqube_expose_method: "{{ sonarqube.expose.kind | default('Route') }}"
+      _sonarqube_expose_uri: "{{ sonarqube.expose.uri | default('') }}"
+      _sonarqube_ssl: "{{ sonarqube.expose.ssl | default(True) }}"
 
-      _sonarqube_image: "{{ sonarqube.image.src | default(omit) }}"
-      _sonarqube_image_tag: "{{ sonarqube.image.tag | default(omit) }}"
-      _sonarqube_image_pull_policy: "{{ sonarqube.image.pullPolicy | default(omit) }}"
+      _sonarqube_image: "{{ sonarqube.image.src | default('quay.io/redhatgov/sonarqube') }}"
+      _sonarqube_image_tag: "{{ sonarqube.image.tag | default('latest') }}"
+      _sonarqube_image_pull_policy: "{{ sonarqube.image.pullPolicy | default('IfNotPresent') }}"
 
-      _sonarqube_persistent: "{{ persistent | default(omit) }}"
-      _sonarqube_volume_size: "{{ sonarqube.volumeSize | default(omit) }}"
+      _sonarqube_persistent: "{{ persistent | default(True) }}"
+      _sonarqube_volume_size: "{{ sonarqube.volumeSize | default('1Gi') }}"
 
       _sonarqube_postgresql_service_name: "postgresql-{{ ansible_operator_meta.name }}"
       _sonarqube_postgresql_database_name: sonardb
       _sonarqube_postgresql_user: sonar
       _sonarqube_postgresql_password: sonar
 
-      _sonarqube_memory_request: "{{ sonarqube.resources.memory.request | default(omit) }}"
-      _sonarqube_memory_limit: "{{ sonarqube.resources.memory.limit | default(omit) }}"
-      _sonarqube_cpu_request: "{{ sonarqube.resources.cpu.request | default(omit) }}"
-      _sonarqube_cpu_limit: "{{ sonarqube.resources.cpu.limit | default(omit) }}"
+      _sonarqube_memory_request: "{{ sonarqube.resources.memory.request | default('2Gi') }}"
+      _sonarqube_memory_limit: "{{ sonarqube.resources.memory.limit | default('3Gi') }}"
+      _sonarqube_cpu_request: "{{ sonarqube.resources.cpu.request | default(1) }}"
+      _sonarqube_cpu_limit: "{{ sonarqube.resources.cpu.limit | default(2) }}"
